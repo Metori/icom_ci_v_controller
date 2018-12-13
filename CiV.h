@@ -3,7 +3,15 @@
 
 #include "Arduino.h"
 
-#define MSG_MAX_SIZE 12
+#define MSG_MAX_SIZE 12 //Including dst and src bytes
+
+typedef enum {
+  RECV_STATE_IDLE,
+  RECV_STATE_PREAMBLE_HALF,
+  RECV_STATE_RECEIVING,
+  RECV_STATE_FILTERING,
+  RECV_STATE_READY
+} ERecvState;
 
 class CCiV {
 public:
@@ -17,16 +25,21 @@ public:
 
   }
 
+  size_t update();
+  size_t getMsg(uint8_t* buffer);
+
 private:
   void send(uint8_t* payload, uint8_t size);
-  size_t recv(uint8_t* buffer, uint8_t size);
+  void recv();
+  void filt();
 
   uint8_t mRadioAddr;
-  uint8_t mControllerAddr;
+  uint8_t mControllerAddr; //this device addr
   uint16_t mBaudRate;
 
-  uint8_t mInMsg[MSG_MAX_SIZE];
-  uint8_t mInOffset = 0;
+  ERecvState mRecvState = RECV_STATE_IDLE;
+  uint8_t mRecvMsg[MSG_MAX_SIZE];
+  uint8_t mRecvSize = 0;
 
 };
 

@@ -1,5 +1,5 @@
-#include "Controls.h"
 #include "CiV.h"
+#include "Controls.h"
 #include <SoftwareSerial.h>
 
 #define DEVICE_NAME "Icom IC-706MkIIG controller"
@@ -28,15 +28,22 @@
 #define PIN_DEBUG_MON_TX NOT_A_PIN
 
 // Software configuration
+#define CI_V_RADIO_ADDR 0x58
+#define CI_V_CONTROLLER_ADDR 0xE0 //this device addr
+#define CI_V_BAUD_RATE 19200
+
 #define DEBOUNCE_MS 25
+// ***** END OF CONFIG *****
 
 SoftwareSerial console(PIN_DEBUG_MON_RX, PIN_DEBUG_MON_TX);
+
+CCiV mCiV(CI_V_RADIO_ADDR, CI_V_CONTROLLER_ADDR, CI_V_BAUD_RATE);
 
 SButton mButtons[] = {{PIN_BUTTON_FAGC, DEBOUNCE_MS},
                       {PIN_BUTTON_VFO_A, DEBOUNCE_MS},
                       {PIN_BUTTON_VFO_B, DEBOUNCE_MS},
                       {PIN_BUTTON_MEMO, DEBOUNCE_MS}};
-CControls mControls = CControls(mButtons, sizeof(mButtons));
+CControls mControls(mButtons, sizeof(mButtons));
 
 void setup(void) {
   console.begin(9600);
