@@ -25,6 +25,10 @@ public:
 
   }
 
+  void sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size);
+  bool isResponseReady();
+  uint8_t getResponse();
+
   size_t update();
   size_t getMsg(uint8_t* buffer);
 
@@ -36,6 +40,8 @@ private:
   uint8_t mRadioAddr;
   uint8_t mControllerAddr; //this device addr
   uint16_t mBaudRate;
+
+  uint8_t mPendingReq[2] = {0xFF, 0xFF};
 
   ERecvState mRecvState = RECV_STATE_IDLE;
   uint8_t mRecvMsg[MSG_MAX_SIZE];
