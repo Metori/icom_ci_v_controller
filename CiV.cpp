@@ -10,7 +10,23 @@
 #define RESPONSE_FB 0xFB
 #define RESPONSE_FA 0xFA
 
+CCiV::CCiV(uint8_t radioAddr, uint8_t controllerAddr, uint16_t baudRate)
+  : mRadioAddr(radioAddr),
+    mControllerAddr(controllerAddr),
+    mBaudRate(baudRate) {
+
+}
+
+CCiV::~CCiV() {
+
+}
+
 void CCiV::sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size) {
+  gConsole.println("Sending request");
+  gConsole.print("CMD: ");
+  gConsole.println(cmd);
+  gConsole.print("SUBCMD: ");
+  gConsole.println(subcmd);
   uint8_t reqSize = size + (subcmd == SUBCMD_NO_SUBCMD ? 1 : 2);
   uint8_t req[reqSize];
 
@@ -26,11 +42,10 @@ void CCiV::sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size)
 }
 
 bool CCiV::isResponseReady() {
-  if (mRecvState == RECV_STATE_READY && mRecvMsg[0] == mPendingReq[0])
-  {
-    if (mPendingReq[1] == SUBCMD_NO_SUBCMD) return true;
-    else return mRecvMsg[1] == mPendingReq[1];
+  if (mRecvState == RECV_STATE_READY && mRecvMsg[0] == mPendingReq[0]) {
+    return (mPendingReq[1] == SUBCMD_NO_SUBCMD || mRecvMsg[1] == mPendingReq[1]);
   }
+  else return false;
 }
 
 uint8_t CCiV::getResponse() {

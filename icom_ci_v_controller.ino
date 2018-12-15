@@ -24,8 +24,8 @@
 #define PIN_BUTTON_VFO_B NOT_A_PIN
 #define PIN_BUTTON_MEMO NOT_A_PIN
 
-#define PIN_DEBUG_MON_RX NOT_A_PIN
-#define PIN_DEBUG_MON_TX NOT_A_PIN
+#define PIN_DEBUG_MON_RX 2
+#define PIN_DEBUG_MON_TX 3
 
 // Software configuration
 #define CI_V_RADIO_ADDR 0x58
@@ -35,7 +35,7 @@
 #define DEBOUNCE_MS 25
 // ***** END OF CONFIG *****
 
-SoftwareSerial console(PIN_DEBUG_MON_RX, PIN_DEBUG_MON_TX);
+SoftwareSerial gConsole(PIN_DEBUG_MON_RX, PIN_DEBUG_MON_TX);
 
 CCiV mCiV(CI_V_RADIO_ADDR, CI_V_CONTROLLER_ADDR, CI_V_BAUD_RATE);
 
@@ -45,14 +45,47 @@ SButton mButtons[] = {{PIN_BUTTON_FAGC, DEBOUNCE_MS},
                       {PIN_BUTTON_MEMO, DEBOUNCE_MS}};
 CControls mControls(mButtons, sizeof(mButtons));
 
-void setup(void) {
-  console.begin(9600);
-  console.println(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION);
-  console.println("By " DEVICE_AUTHOR);
+unsigned long mLastTry = 0;
+bool mTried = false;
 
+void setup(void) {
+  gConsole.begin(9600);
+  gConsole.println(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION);
+  gConsole.println("By " DEVICE_AUTHOR);
+
+  Serial.begin(19200);
+
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
+  delay(1000);
+  digitalWrite(13, LOW);
 }
 
 void loop(void) {
+  //delay(1000); digitalWrite(13, HIGH); delay(1000); digitalWrite(13, LOW); return;
+  
   mControls.update();
+
+  unsigned long m = millis();
+  if (!mTried && ((m - mLastTry) > 10000)) {
+    digitalWrite(13, HIGH);
+    gConsole.println("Sending...");
+    uint8_t d[] = {0x02};
+    mCiV.sendRequest(0x16, 0x12, d, 1);
+    mTried = true;
+    gConsole.println("Request sent");
+  }
+
+  mCiV.update();
+
+  if (m - mLastTry > 10000) {
+    if (mCiV.isResponseReady()) {
+      digitalWrite(13, LOW);
+      gConsole.print("Response received: ");
+      gConsole.println(mCiV.getResponse());
+      mLastTry = millis();
+      mTried = false;
+    }
+  }
 }
 
