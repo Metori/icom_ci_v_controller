@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 
-#define MSG_MAX_SIZE 12 //Including dst and src bytes
+#define MSG_MAX_SIZE 15 //Including dst and src bytes
 
 extern SoftwareSerial gConsole;
 
@@ -36,8 +36,6 @@ private:
   uint8_t mRadioAddr;
   uint8_t mControllerAddr; //this device addr
   uint16_t mBaudRate;
-
-  uint8_t mPendingReq[2] = {0xFF, 0xFF};
 
   ERecvState mRecvState = RECV_STATE_IDLE;
   uint8_t mRecvMsg[MSG_MAX_SIZE];

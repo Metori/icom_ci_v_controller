@@ -22,7 +22,7 @@ CCiV::~CCiV() {
 }
 
 void CCiV::sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size) {
-  gConsole.println("Sending request");
+  gConsole.println("[CiV] Sending request");
   gConsole.print("CMD: ");
   gConsole.println(cmd);
   gConsole.print("SUBCMD: ");
@@ -35,21 +35,15 @@ void CCiV::sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size)
   if (subcmd != SUBCMD_NO_SUBCMD) req[i++] = subcmd;
   memcpy(req + i, data, size);
 
-  mPendingReq[0] = cmd;
-  mPendingReq[1] = subcmd;
-
   send(req, reqSize);
 }
 
 bool CCiV::isResponseReady() {
-  if (mRecvState == RECV_STATE_READY && mRecvMsg[0] == mPendingReq[0]) {
-    return (mPendingReq[1] == SUBCMD_NO_SUBCMD || mRecvMsg[1] == mPendingReq[1]);
-  }
-  else return false;
+  return mRecvState == RECV_STATE_READY;
 }
 
 uint8_t CCiV::getResponse() {
-  return mRecvMsg[2];
+  return mRecvMsg[0];
 }
 
 void CCiV::send(uint8_t* payload, uint8_t size) {
@@ -90,15 +84,18 @@ void CCiV::recv() {
     rb = Serial.read();
     switch (mRecvState) {
       case RECV_STATE_IDLE:
+        gConsole.println("recv IDLE");
         if (rb == MSG_PREAMBLE) mRecvState = RECV_STATE_PREAMBLE_HALF;
         break;
       case RECV_STATE_PREAMBLE_HALF:
+        gConsole.println("recv PREAMBLE_HALF");
         if (rb == MSG_PREAMBLE) {
           mRecvState = RECV_STATE_RECEIVING;
           mRecvSize = 0;
         }
         break;
       case RECV_STATE_RECEIVING:
+        gConsole.println("recv RECEIVING");
         if (rb == MSG_END_CODE) mRecvState = RECV_STATE_FILTERING;
         else {
           //Overflow condition: discard current msg
@@ -111,26 +108,36 @@ void CCiV::recv() {
 }
 
 void CCiV::filt() {
-  if (mRecvState < RECV_STATE_FILTERING) return;
+  if (mRecvState != RECV_STATE_FILTERING) return;
+  gConsole.println("[CiV] filt");
 
   uint8_t dst = mRecvMsg[0];
   uint8_t src = mRecvMsg[1];
 
+  gConsole.print("DST: ");
+  gConsole.println(dst);
+  gConsole.print("SRC: ");
+  gConsole.println(src);
+
   if (dst == mRadioAddr && src == mControllerAddr) { //echo of sended message
+    gConsole.println("Echo message discarded");
     //TODO: implement handling of echo check, send jammer msg in case of jam
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
   } else if (dst == mControllerAddr && src == mRadioAddr) {
+    gConsole.println("Filtering...");
     for (int i = 0; i < (mRecvSize - 2); i++) {
       mRecvMsg[i] = mRecvMsg[i + 2];
     }
     mRecvSize -= 2;
     mRecvState = RECV_STATE_READY;
   } else if (dst == BROADCAST_ADDR) {
+    gConsole.println("Broadcast message discarded");
     //TODO: implement handling of broadcast msgs
-    //Discard msg
+    //Discard msg `
     mRecvState = RECV_STATE_IDLE;
   } else {
+    gConsole.println("Unknown message discarded");
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
   }

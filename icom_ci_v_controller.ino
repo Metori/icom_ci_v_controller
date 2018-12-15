@@ -43,7 +43,7 @@ SButton mButtons[] = {{PIN_BUTTON_FAGC, DEBOUNCE_MS},
                       {PIN_BUTTON_VFO_A, DEBOUNCE_MS},
                       {PIN_BUTTON_VFO_B, DEBOUNCE_MS},
                       {PIN_BUTTON_MEMO, DEBOUNCE_MS}};
-CControls mControls(mButtons, sizeof(mButtons));
+CControls mControls(mButtons, sizeof(mButtons) / sizeof(mButtons[0]));
 
 unsigned long mLastTry = 0;
 bool mTried = false;
