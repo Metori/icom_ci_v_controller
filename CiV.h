@@ -21,7 +21,7 @@ public:
   CCiV(uint8_t radioAddr, uint8_t controllerAddr, uint16_t baudRate);
   ~CCiV();
 
-  void sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size);
+  void sendRequest(uint16_t cmd, uint8_t* data, uint8_t size);
   bool isResponseReady();
   uint8_t getResponse();
 

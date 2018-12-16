@@ -71,7 +71,7 @@ void loop(void) {
     digitalWrite(13, HIGH);
     gConsole.println("Sending...");
     uint8_t d[] = {0x02};
-    mCiV.sendRequest(0x16, 0x12, d, 1);
+    mCiV.sendRequest(0x1612, d, 1);
     mTried = true;
     gConsole.println("Request sent");
   }

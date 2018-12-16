@@ -5,7 +5,7 @@
 
 #define BROADCAST_ADDR 0x00
 
-#define SUBCMD_NO_SUBCMD 0xFF
+#define NO_SC 0xFF
 
 #define RESPONSE_FB 0xFB
 #define RESPONSE_FA 0xFA
@@ -21,18 +21,23 @@ CCiV::~CCiV() {
 
 }
 
-void CCiV::sendRequest(uint8_t cmd, uint8_t subcmd, uint8_t* data, uint8_t size) {
+void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
   gConsole.println("[CiV] Sending request");
-  gConsole.print("CMD: ");
-  gConsole.println(cmd);
-  gConsole.print("SUBCMD: ");
-  gConsole.println(subcmd);
-  uint8_t reqSize = size + (subcmd == SUBCMD_NO_SUBCMD ? 1 : 2);
+
+  uint8_t cn = cmd >> 8;
+  uint8_t sc = cmd & 0xFF;
+
+  gConsole.print("Cn: ");
+  gConsole.println(cn);
+  gConsole.print("Sc: ");
+  gConsole.println(sc);
+
+  uint8_t reqSize = size + (sc == NO_SC ? 1 : 2);
   uint8_t req[reqSize];
 
   uint8_t i = 0;
-  req[i++] = cmd;
-  if (subcmd != SUBCMD_NO_SUBCMD) req[i++] = subcmd;
+  req[i++] = cn;
+  if (sc != NO_SC) req[i++] = sc;
   memcpy(req + i, data, size);
 
   send(req, reqSize);
@@ -43,6 +48,7 @@ bool CCiV::isResponseReady() {
 }
 
 uint8_t CCiV::getResponse() {
+  mRecvState = RECV_STATE_IDLE;
   return mRecvMsg[0];
 }
 
