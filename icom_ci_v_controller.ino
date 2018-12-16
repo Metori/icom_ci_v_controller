@@ -4,7 +4,7 @@
 
 #define DEVICE_NAME "Icom IC-706MkIIG controller"
 #define DEVICE_HW_VERSION "0.1"
-#define DEVICE_SW_VERSION "0.1"
+#define DEVICE_SW_VERSION "0.2"
 #define DEVICE_AUTHOR "Artem Pinchuk"
 
 /* HW history
@@ -13,6 +13,7 @@
 
 /* SW history
  * 0.1 - Initial code
+ * 0.2 - Main part of CI-V protocol implemented
  */
 
 // ***** CONFIG *****
@@ -53,8 +54,6 @@ void setup(void) {
   gConsole.println(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION);
   gConsole.println("By " DEVICE_AUTHOR);
 
-  Serial.begin(19200);
-
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
   delay(1000);
@@ -62,8 +61,6 @@ void setup(void) {
 }
 
 void loop(void) {
-  //delay(1000); digitalWrite(13, HIGH); delay(1000); digitalWrite(13, LOW); return;
-  
   mControls.update();
 
   unsigned long m = millis();
@@ -77,15 +74,5 @@ void loop(void) {
   }
 
   mCiV.update();
-
-  if (m - mLastTry > 10000) {
-    if (mCiV.isResponseReady()) {
-      digitalWrite(13, LOW);
-      gConsole.print("Response received: ");
-      gConsole.println(mCiV.getResponse());
-      mLastTry = millis();
-      mTried = false;
-    }
-  }
 }
 

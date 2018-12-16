@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 
-#define MSG_MAX_SIZE 15 //Including dst and src bytes
+#define MSG_MAX_SIZE 12 //Including dst and src bytes
 
 extern SoftwareSerial gConsole;
 
@@ -22,6 +22,7 @@ public:
   ~CCiV();
 
   void sendRequest(uint16_t cmd, uint8_t* data, uint8_t size);
+  void sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitResponse);
   bool isResponseReady();
   uint8_t getResponse();
 
@@ -35,12 +36,15 @@ private:
 
   uint8_t mRadioAddr;
   uint8_t mControllerAddr; //this device addr
-  uint16_t mBaudRate;
 
   ERecvState mRecvState = RECV_STATE_IDLE;
   uint8_t mRecvMsg[MSG_MAX_SIZE];
   uint8_t mRecvSize = 0;
 
+  uint8_t mPendingReq[MSG_MAX_SIZE];
+  uint8_t mPendingReqSize = 0;
+  unsigned long mPendingReqStartTimeMs = 0;
+  uint8_t mTry = 0;
 };
 
 #endif // _CIV_H

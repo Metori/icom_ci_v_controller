@@ -7,14 +7,16 @@
 
 #define NO_SC 0xFF
 
-#define RESPONSE_FB 0xFB
-#define RESPONSE_FA 0xFA
+#define RESP_ACK 0xFB
+#define RESP_NACK 0xFA
+
+#define RESP_WAIT_TIMEOUT_MS 1000
+#define REQ_TRIES 3
 
 CCiV::CCiV(uint8_t radioAddr, uint8_t controllerAddr, uint16_t baudRate)
   : mRadioAddr(radioAddr),
-    mControllerAddr(controllerAddr),
-    mBaudRate(baudRate) {
-
+    mControllerAddr(controllerAddr) {
+  Serial.begin(baudRate);
 }
 
 CCiV::~CCiV() {
@@ -22,6 +24,10 @@ CCiV::~CCiV() {
 }
 
 void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
+  sendRequest(cmd, data, size, true);
+}
+
+void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitResponse) {
   gConsole.println("[CiV] Sending request");
 
   uint8_t cn = cmd >> 8;
@@ -41,6 +47,13 @@ void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
   memcpy(req + i, data, size);
 
   send(req, reqSize);
+
+  if (waitResponse) {
+    mPendingReqStartTimeMs = millis();
+    memcpy(mPendingReq, req, reqSize);
+    mPendingReqSize = reqSize;
+    mTry = 0;
+  }
 }
 
 bool CCiV::isResponseReady() {
@@ -73,7 +86,44 @@ size_t CCiV::update() {
   recv();
   filt();
 
-  if (mRecvState == RECV_STATE_READY) ret = mRecvSize;
+  if (mRecvState == RECV_STATE_READY) {
+    if (mRecvSize == 1) {
+      if (mRecvMsg[0] == RESP_ACK) {
+        gConsole.println("[CiV] ACK received");
+        //TODO: handle ACK
+        mPendingReqSize = 0;
+      } else if (mRecvMsg[0] == RESP_NACK) {
+        gConsole.println("[CiV] NACK received");
+        //TODO: handle NACK
+        mPendingReqSize = 0;
+      } else {
+        gConsole.println("[CiV] Unknown response, discard");
+      }
+    } else if (mRecvSize > 1) {
+      gConsole.println("[CiV] Response with data received");
+      //TODO: handle response with data
+      mPendingReqSize = 0;
+    } else {
+      gConsole.println("[CiV] Empty msg, discard");
+    }
+
+    mRecvState = RECV_STATE_IDLE;
+    ret = mRecvSize;
+  } else {
+    if ((mPendingReqSize != 0) && (millis() - mPendingReqStartTimeMs > RESP_WAIT_TIMEOUT_MS)) {
+      if (++mTry < REQ_TRIES) {
+        gConsole.println("[CiV] Req wait timeout, retrying...");
+        send(mPendingReq, mPendingReqSize);
+        mPendingReqStartTimeMs = millis();
+      } else {
+        gConsole.println("[CiV] Request retries left");
+        //TODO: handle req timeout err
+        mPendingReqSize = 0;
+
+        
+      }
+    }
+  }
 
   return ret;
 }
@@ -126,7 +176,7 @@ void CCiV::filt() {
   gConsole.println(src);
 
   if (dst == mRadioAddr && src == mControllerAddr) { //echo of sended message
-    gConsole.println("Echo message discarded");
+    gConsole.println("Echo msg discarded");
     //TODO: implement handling of echo check, send jammer msg in case of jam
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
@@ -138,12 +188,12 @@ void CCiV::filt() {
     mRecvSize -= 2;
     mRecvState = RECV_STATE_READY;
   } else if (dst == BROADCAST_ADDR) {
-    gConsole.println("Broadcast message discarded");
+    gConsole.println("Broadcast msg discarded");
     //TODO: implement handling of broadcast msgs
-    //Discard msg `
+    //Discard msg
     mRecvState = RECV_STATE_IDLE;
   } else {
-    gConsole.println("Unknown message discarded");
+    gConsole.println("Unknown msg discarded");
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
   }
