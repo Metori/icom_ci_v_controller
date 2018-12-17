@@ -59,6 +59,8 @@ void setup(void) {
   DEBUG_PRINTLN(F(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION));
   DEBUG_PRINTLN(F("By " DEVICE_AUTHOR));
 
+  mCiV.init();
+
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
   delay(1000);
@@ -69,13 +71,11 @@ void loop(void) {
   mControls.update();
 
   unsigned long m = millis();
-  if (!mTried && ((m - mLastTry) > 10000)) {
-    digitalWrite(13, HIGH);
-    DEBUG_PRINTLN(F("Sending..."));
-    uint8_t d[] = {0x02};
-    mCiV.sendRequest(0x1612, d, 1);
-    mTried = true;
-    DEBUG_PRINTLN(F("Request sent"));
+  if ((m - mLastTry) > 1000) {
+    if (!mTried) { mCiV.sendRequest(MSG_SET_AGC, AGC_SLOW); digitalWrite(13, HIGH); }
+    else { mCiV.sendRequest(MSG_SET_AGC, AGC_FAST); digitalWrite(13, LOW); }
+    mTried = !mTried;
+    mLastTry = m;
   }
 
   mCiV.update();

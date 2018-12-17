@@ -16,19 +16,30 @@
 
 CCiV::CCiV(uint8_t radioAddr, uint8_t controllerAddr, uint16_t baudRate)
   : mRadioAddr(radioAddr),
-    mControllerAddr(controllerAddr) {
-  Serial.begin(baudRate);
+    mControllerAddr(controllerAddr),
+    mBaudRate(baudRate) {
+
 }
 
 CCiV::~CCiV() {
 
 }
 
-void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
-  sendRequest(cmd, data, size, true);
+void CCiV::init() {
+  Serial.begin(mBaudRate);
 }
 
-void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitResponse) {
+bool CCiV::sendRequest(uint16_t cmd, uint8_t data) {
+  return sendRequest(cmd, &data, 1);
+}
+
+bool CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
+  return sendRequest(cmd, data, size, true);
+}
+
+bool CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitResponse) {
+  if (mPendingReqSize > 0) return false;
+  
   DEBUG_PRINTLN(F("[CiV] Sending request"));
 
   uint8_t cn = cmd >> 8;
@@ -45,7 +56,7 @@ void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitRespo
   uint8_t i = 0;
   req[i++] = cn;
   if (sc != NO_SC) req[i++] = sc;
-  memcpy(req + i, data, size);
+  if (data != nullptr && size > 0) memcpy(req + i, data, size);
 
   send(req, reqSize);
 
@@ -55,6 +66,8 @@ void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitRespo
     mPendingReqSize = reqSize;
     mTry = 0;
   }
+
+  return true;
 }
 
 bool CCiV::isResponseReady() {
