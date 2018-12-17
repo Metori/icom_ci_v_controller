@@ -1,6 +1,6 @@
 #include "CiV.h"
 #include "Controls.h"
-#include <SoftwareSerial.h>
+#include "Debug.h"
 
 #define DEVICE_NAME "Icom IC-706MkIIG controller"
 #define DEVICE_HW_VERSION "0.1"
@@ -36,7 +36,9 @@
 #define DEBOUNCE_MS 25
 // ***** END OF CONFIG *****
 
+#ifdef DEBUG
 SoftwareSerial gConsole(PIN_DEBUG_MON_RX, PIN_DEBUG_MON_TX);
+#endif
 
 CCiV mCiV(CI_V_RADIO_ADDR, CI_V_CONTROLLER_ADDR, CI_V_BAUD_RATE);
 
@@ -50,9 +52,12 @@ unsigned long mLastTry = 0;
 bool mTried = false;
 
 void setup(void) {
+#ifdef DEBUG
   gConsole.begin(9600);
-  gConsole.println(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION);
-  gConsole.println("By " DEVICE_AUTHOR);
+#endif
+
+  DEBUG_PRINTLN(F(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION));
+  DEBUG_PRINTLN(F("By " DEVICE_AUTHOR));
 
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
@@ -66,11 +71,11 @@ void loop(void) {
   unsigned long m = millis();
   if (!mTried && ((m - mLastTry) > 10000)) {
     digitalWrite(13, HIGH);
-    gConsole.println("Sending...");
+    DEBUG_PRINTLN(F("Sending..."));
     uint8_t d[] = {0x02};
     mCiV.sendRequest(0x1612, d, 1);
     mTried = true;
-    gConsole.println("Request sent");
+    DEBUG_PRINTLN(F("Request sent"));
   }
 
   mCiV.update();

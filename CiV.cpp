@@ -1,4 +1,5 @@
 #include "CiV.h"
+#include "Debug.h"
 
 #define MSG_PREAMBLE 0xFE //two preambles start a CI-V message
 #define MSG_END_CODE 0xFD
@@ -28,15 +29,15 @@ void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
 }
 
 void CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitResponse) {
-  gConsole.println("[CiV] Sending request");
+  DEBUG_PRINTLN(F("[CiV] Sending request"));
 
   uint8_t cn = cmd >> 8;
   uint8_t sc = cmd & 0xFF;
 
-  gConsole.print("Cn: ");
-  gConsole.println(cn);
-  gConsole.print("Sc: ");
-  gConsole.println(sc);
+  DEBUG_PRINT(F("Cn: "));
+  DEBUG_PRINTLN(cn);
+  DEBUG_PRINT(F("Sc: "));
+  DEBUG_PRINTLN(sc);
 
   uint8_t reqSize = size + (sc == NO_SC ? 1 : 2);
   uint8_t req[reqSize];
@@ -89,22 +90,22 @@ size_t CCiV::update() {
   if (mRecvState == RECV_STATE_READY) {
     if (mRecvSize == 1) {
       if (mRecvMsg[0] == RESP_ACK) {
-        gConsole.println("[CiV] ACK received");
+        DEBUG_PRINTLN(F("[CiV] ACK received"));
         //TODO: handle ACK
         mPendingReqSize = 0;
       } else if (mRecvMsg[0] == RESP_NACK) {
-        gConsole.println("[CiV] NACK received");
+        DEBUG_PRINTLN(F("[CiV] NACK received"));
         //TODO: handle NACK
         mPendingReqSize = 0;
       } else {
-        gConsole.println("[CiV] Unknown response, discard");
+        DEBUG_PRINTLN(F("[CiV] Unknown response, discard"));
       }
     } else if (mRecvSize > 1) {
-      gConsole.println("[CiV] Response with data received");
+      DEBUG_PRINTLN(F("[CiV] Response with data received"));
       //TODO: handle response with data
       mPendingReqSize = 0;
     } else {
-      gConsole.println("[CiV] Empty msg, discard");
+      DEBUG_PRINTLN(F("[CiV] Empty msg, discard"));
     }
 
     mRecvState = RECV_STATE_IDLE;
@@ -112,11 +113,11 @@ size_t CCiV::update() {
   } else {
     if ((mPendingReqSize != 0) && (millis() - mPendingReqStartTimeMs > RESP_WAIT_TIMEOUT_MS)) {
       if (++mTry < REQ_TRIES) {
-        gConsole.println("[CiV] Req wait timeout, retrying...");
+        DEBUG_PRINTLN(F("[CiV] Req wait timeout, retrying..."));
         send(mPendingReq, mPendingReqSize);
         mPendingReqStartTimeMs = millis();
       } else {
-        gConsole.println("[CiV] Request retries left");
+        DEBUG_PRINTLN(F("[CiV] Request retries left"));
         //TODO: handle req timeout err
         mPendingReqSize = 0;
 
@@ -140,18 +141,18 @@ void CCiV::recv() {
     rb = Serial.read();
     switch (mRecvState) {
       case RECV_STATE_IDLE:
-        gConsole.println("recv IDLE");
+        DEBUG_PRINTLN(F("recv IDLE"));
         if (rb == MSG_PREAMBLE) mRecvState = RECV_STATE_PREAMBLE_HALF;
         break;
       case RECV_STATE_PREAMBLE_HALF:
-        gConsole.println("recv PREAMBLE_HALF");
+        DEBUG_PRINTLN(F("recv PREAMBLE_HALF"));
         if (rb == MSG_PREAMBLE) {
           mRecvState = RECV_STATE_RECEIVING;
           mRecvSize = 0;
         }
         break;
       case RECV_STATE_RECEIVING:
-        gConsole.println("recv RECEIVING");
+        DEBUG_PRINTLN(F("recv RECEIVING"));
         if (rb == MSG_END_CODE) mRecvState = RECV_STATE_FILTERING;
         else {
           //Overflow condition: discard current msg
@@ -165,35 +166,35 @@ void CCiV::recv() {
 
 void CCiV::filt() {
   if (mRecvState != RECV_STATE_FILTERING) return;
-  gConsole.println("[CiV] filt");
+  DEBUG_PRINTLN(F("[CiV] filt"));
 
   uint8_t dst = mRecvMsg[0];
   uint8_t src = mRecvMsg[1];
 
-  gConsole.print("DST: ");
-  gConsole.println(dst);
-  gConsole.print("SRC: ");
-  gConsole.println(src);
+  DEBUG_PRINT(F("DST: "));
+  DEBUG_PRINTLN(dst);
+  DEBUG_PRINT(F("SRC: "));
+  DEBUG_PRINTLN(src);
 
   if (dst == mRadioAddr && src == mControllerAddr) { //echo of sended message
-    gConsole.println("Echo msg discarded");
+    DEBUG_PRINTLN(F("Echo msg discarded"));
     //TODO: implement handling of echo check, send jammer msg in case of jam
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
   } else if (dst == mControllerAddr && src == mRadioAddr) {
-    gConsole.println("Filtering...");
+    DEBUG_PRINTLN(F("Filtering..."));
     for (int i = 0; i < (mRecvSize - 2); i++) {
       mRecvMsg[i] = mRecvMsg[i + 2];
     }
     mRecvSize -= 2;
     mRecvState = RECV_STATE_READY;
   } else if (dst == BROADCAST_ADDR) {
-    gConsole.println("Broadcast msg discarded");
+    DEBUG_PRINTLN(F("Broadcast msg discarded"));
     //TODO: implement handling of broadcast msgs
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
   } else {
-    gConsole.println("Unknown msg discarded");
+    DEBUG_PRINTLN(F("Unknown msg discarded"));
     //Discard msg
     mRecvState = RECV_STATE_IDLE;
   }

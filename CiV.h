@@ -2,11 +2,8 @@
 #define _CIV_H
 
 #include "Arduino.h"
-#include <SoftwareSerial.h>
 
 #define MSG_MAX_SIZE 12 //Including dst and src bytes
-
-extern SoftwareSerial gConsole;
 
 typedef enum {
   RECV_STATE_IDLE,
