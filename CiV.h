@@ -35,7 +35,8 @@
 #define PREAMP_2 0x02
 
 #define AGC_FAST 0x01
-#define AGC_SLOW 0x02
+#define AGC_MID 0x02
+#define AGC_SLOW 0x03 //Not supported by IC-706MkIIG
 
 #define BKIN_OFF 0x00
 #define BKIN_SEMI 0x01

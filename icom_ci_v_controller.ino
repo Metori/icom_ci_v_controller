@@ -72,7 +72,7 @@ void loop(void) {
 
   unsigned long m = millis();
   if ((m - mLastTry) > 1000) {
-    if (!mTried) { mCiV.sendRequest(MSG_SET_AGC, AGC_SLOW); digitalWrite(13, HIGH); }
+    if (!mTried) { mCiV.sendRequest(MSG_SET_AGC, AGC_MID); digitalWrite(13, HIGH); }
     else { mCiV.sendRequest(MSG_SET_AGC, AGC_FAST); digitalWrite(13, LOW); }
     mTried = !mTried;
     mLastTry = m;
