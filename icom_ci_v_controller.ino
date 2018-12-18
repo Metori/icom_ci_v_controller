@@ -66,6 +66,7 @@ void setup(void) {
   DEBUG_PRINTLN(F(DEVICE_NAME " HW Ver. " DEVICE_HW_VERSION " SW Ver. " DEVICE_SW_VERSION));
   DEBUG_PRINTLN(F("By " DEVICE_AUTHOR));
 
+  mControls.init();
   mCiV.init();
 
   //Blink the built-in LED at start

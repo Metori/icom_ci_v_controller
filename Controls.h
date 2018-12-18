@@ -29,6 +29,7 @@ public:
     delete[] mDebouncers;
   }
 
+  void init();
   int update();
 
 private:
