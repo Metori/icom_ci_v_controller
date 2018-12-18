@@ -4,7 +4,7 @@
 
 #define DEVICE_NAME "Icom IC-706MkIIG controller"
 #define DEVICE_HW_VERSION "0.1"
-#define DEVICE_SW_VERSION "0.2"
+#define DEVICE_SW_VERSION "0.3"
 #define DEVICE_AUTHOR "Artem Pinchuk"
 
 /* HW history
@@ -14,16 +14,17 @@
 /* SW history
  * 0.1 - Initial code
  * 0.2 - Main part of CI-V protocol implemented
+ * 0.3 - Buttons handling added
  */
 
 // ***** CONFIG *****
 // Hardware configuration
 #define PIN_S_METER NOT_A_PIN
 
-#define PIN_BUTTON_FAGC NOT_A_PIN
-#define PIN_BUTTON_VFO_A NOT_A_PIN
-#define PIN_BUTTON_VFO_B NOT_A_PIN
-#define PIN_BUTTON_MEMO NOT_A_PIN
+#define PIN_BUTTON_FAGC 4
+#define PIN_BUTTON_VFO_A 5
+#define PIN_BUTTON_VFO_B 6
+#define PIN_BUTTON_MEMO 7
 
 #define PIN_DEBUG_MON_RX 2
 #define PIN_DEBUG_MON_TX 3
@@ -48,8 +49,14 @@ SButton mButtons[] = {{PIN_BUTTON_FAGC, DEBOUNCE_MS},
                       {PIN_BUTTON_MEMO, DEBOUNCE_MS}};
 CControls mControls(mButtons, sizeof(mButtons) / sizeof(mButtons[0]));
 
-unsigned long mLastTry = 0;
-bool mTried = false;
+uint8_t mCurAgcState = AGC_FAST;
+
+uint8_t toggleAgc() {
+  if (mCurAgcState == AGC_FAST) mCurAgcState = AGC_MID;
+  else mCurAgcState = AGC_FAST;
+
+  return mCurAgcState;
+}
 
 void setup(void) {
 #ifdef DEBUG
@@ -61,21 +68,37 @@ void setup(void) {
 
   mCiV.init();
 
+  //Blink the built-in LED at start
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
   delay(1000);
   digitalWrite(13, LOW);
+
+  //Set initial AGC at start
+  mCiV.sendRequest(MSG_SET_AGC, mCurAgcState);
 }
 
 void loop(void) {
-  mControls.update();
-
-  unsigned long m = millis();
-  if ((m - mLastTry) > 1000) {
-    if (!mTried) { mCiV.sendRequest(MSG_SET_AGC, AGC_MID); digitalWrite(13, HIGH); }
-    else { mCiV.sendRequest(MSG_SET_AGC, AGC_FAST); digitalWrite(13, LOW); }
-    mTried = !mTried;
-    mLastTry = m;
+  switch (mControls.update())
+  {
+    case PIN_BUTTON_FAGC:
+      DEBUG_PRINTLN(F("FAGC clicked"));
+      mCiV.sendRequest(MSG_SET_AGC, toggleAgc());
+      break;
+    case PIN_BUTTON_VFO_A:
+      DEBUG_PRINTLN(F("VFO_A clicked"));
+      mCiV.sendRequest(MSG_VFO_A);
+      break;
+    case PIN_BUTTON_VFO_B:
+      DEBUG_PRINTLN(F("VFO_B clicked"));
+      mCiV.sendRequest(MSG_VFO_B);
+      break;
+    case PIN_BUTTON_MEMO:
+      DEBUG_PRINTLN(F("MEMO clicked"));
+      mCiV.sendRequest(MSG_MEMO);
+      break;
+    default:
+      break;
   }
 
   mCiV.update();

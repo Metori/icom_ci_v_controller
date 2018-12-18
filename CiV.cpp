@@ -29,6 +29,10 @@ void CCiV::init() {
   Serial.begin(mBaudRate);
 }
 
+bool CCiV::sendRequest(uint16_t cmd) {
+  return sendRequest(cmd, nullptr, 0);
+}
+
 bool CCiV::sendRequest(uint16_t cmd, uint8_t data) {
   return sendRequest(cmd, &data, 1);
 }

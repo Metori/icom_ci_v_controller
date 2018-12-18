@@ -57,6 +57,7 @@ public:
 
   void init();
 
+  bool sendRequest(uint16_t cmd);
   bool sendRequest(uint16_t cmd, uint8_t data);
   bool sendRequest(uint16_t cmd, uint8_t* data, uint8_t size);
   bool sendRequest(uint16_t cmd, uint8_t* data, uint8_t size, bool waitResponse);
