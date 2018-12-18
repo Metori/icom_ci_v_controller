@@ -9,6 +9,7 @@ CControls::CControls(SButton* buttons, uint8_t count) {
     SButton btn = buttons[i];
     
     pinMode(btn.pin, INPUT_PULLUP);
+    mPins[i] = btn.pin;
     mDebouncers[i].attach(btn.pin);
     mDebouncers[i].interval(btn.debounceMs);
   }
