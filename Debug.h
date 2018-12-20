@@ -1,7 +1,7 @@
 #ifndef _DEBUG_H
 #define _DEBUG_H
 
-#define DEBUG //Enable debug prints
+//#define DEBUG //Enable debug prints
 
 #ifdef DEBUG
   #include <SoftwareSerial.h>

@@ -3,12 +3,13 @@
 #include "Debug.h"
 
 #define DEVICE_NAME "Icom IC-706MkIIG controller"
-#define DEVICE_HW_VERSION "0.1"
+#define DEVICE_HW_VERSION "1.0"
 #define DEVICE_SW_VERSION "0.3"
 #define DEVICE_AUTHOR "Artem Pinchuk"
 
 /* HW history
  * 0.1 - Initial HW for testing
+ * 1.0 - Complete device
  */
 
 /* SW history
