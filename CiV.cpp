@@ -37,6 +37,10 @@ bool CCiV::sendRequest(uint16_t cmd, uint8_t data) {
   return sendRequest(cmd, &data, 1);
 }
 
+bool CCiV::sendRequest(uint16_t cmd, uint8_t data, bool waitResponse) {
+  return sendRequest(cmd, &data, 1, waitResponse);
+}
+
 bool CCiV::sendRequest(uint16_t cmd, uint8_t* data, uint8_t size) {
   return sendRequest(cmd, data, size, true);
 }

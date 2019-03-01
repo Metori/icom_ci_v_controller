@@ -83,14 +83,15 @@ void setup(void) {
   //Blink the built-in LED at start
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
-  delay(1000);
+  delay(250);
   digitalWrite(13, LOW);
 
   //Set initial AGC at start
-  mCiV.sendRequest(MSG_SET_AGC, mCurAgcState);
+  mCiV.sendRequest(MSG_SET_AGC, mCurAgcState, false);
+  delay(50);
 
   //Set initial BKIN at start
-  mCiV.sendRequest(MSG_SET_BKIN, mCurBkInState);
+  mCiV.sendRequest(MSG_SET_BKIN, mCurBkInState, false);
 }
 
 void loop(void) {
